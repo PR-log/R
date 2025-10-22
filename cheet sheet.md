@@ -86,6 +86,7 @@ if(score > 90) {
 if (a > 5 & b > 30) {
   print(a+b)
 }
+# next : pass, resume, continue와 같이 사용
 ```
 
 ```
@@ -263,4 +264,45 @@ for (i in 1:nrow(myds)) {
 grp <- factor(grp) #문자벡터를 팩터 타입으로 변경
 grp <- factor(grp, levels=c("H", 'M', "L")) # 레벨의 순서 지정
 grp
+
+#히스토그램 나눠서 동시에 여러개 표시
+par(mfrow=c(2,3)) # 2x3 가상화면 분할
+par(mfrow=c(1,1)) #가상화면 분할 해제
+
+
+#함수
+function_name <- function(arg1, arg2, ...) {
+  # 함수 내용
+  result <- arg1 + arg2  # 예시: 입력 값들을 더함
+  return(result)  # 결과를 반환
+}
+
+#다른 파일 함수 불러오기
+source("폴더이름", local=TRUE) #불러온 함수는 전역함수가 디폴트임
+
+-,+,*,/	사칙연산
+%%	Modulus(나머지연산)
+%/%	Integer division(정수나누기의 몫)
+<	작다(논리값)
+>	크다(논리값)
+==	같다(논리값)
+>=	크거나 같다(논리값)
+<=	작거나 같다(논리값)
+!	부정
+^	지수
+&	And, vectorized
+&&	And
+|	Or, vectorized
+||	Or
+<-	오른쪽값을 왼쪽으로 할당
+=	오른쪽값을 왼쪽으로 할당
+<<-	global assignment(함수 외부의 변수값 지정)"
+
+
+matrix(1:6, nrow = 2, ncol = 3, byrow = TRUE) #데이사 1:6이 열 방향으로 채워짐, 2행 3열
+
+#데이터 프레임 열 이름 변경
+colnames(df)[2] <- "age"
+
+
 ```
