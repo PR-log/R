@@ -42,6 +42,10 @@ sort(d, decreasing = FALSE) #오름차순
 sort(d, decreasing = TRUE) #내림차순
 # sort(d, TRUE) 이렇게 사용해도 결과 같음
 
+# arrange() : 변수를 기준으로 오름차순(작 > 큼) 데이터를 정렬
+temp_arrange_Delay <- arrange(hflights_test, ArrDelay) # ArrDelay에 대해 오름차순
+temp_arrange_Delay <- arrange(hflights_test, desc(ArrDelay)) #내림차순
+
 # 오름차순 정렬 (점수 기준)
 data_clean %>% arrange(score)
 
@@ -341,6 +345,7 @@ data_clean <- data %>% filter(!is.na(age) & !is.na(score))
 
 필터링
 ```
+# filter() 조건에 맞는 데이터 추출
 # 성별이 남자인 데이터 필터링
 data_male <- data_clean %>% filter(gender == "남")
 
@@ -365,6 +370,9 @@ data_clean <- data_clean %>%
   mutate(grade = ifelse(score >= 90, "A",
                         ifelse(score >= 80, "B", "C")))
 
+# select() : 변수 선택
+a <- select(df, a, b, c) # df에서 a b c 열을 골라서 a 데이터프레임으로 저장
+
 # 열 삭제, select -gender = gender만 빼고 선택
 data_clean <- data_clean %>% select(-gender)
 
@@ -377,5 +385,10 @@ for (g in grades) {
   write.csv(subset_data, paste0("grade_", g, ".csv"), row.names = FALSE)
 }
 
+
+# group_by() : 변수를 기준으로 데이터를 그룹화
+planes_group <- group_by(hflights_test, UniqueCarrier)
+planes_group_summarise <- summarise(planes_group, count = n(), dist = mean(Distance, na.rm = TRUE))
+planes_group_summarise
 
 ```
