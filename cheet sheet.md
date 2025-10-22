@@ -36,10 +36,17 @@ GNP
 rep(1:5,each=5)
 ```
 
+정렬
 ```
 sort(d, decreasing = FALSE) #오름차순
 sort(d, decreasing = TRUE) #내림차순
 # sort(d, TRUE) 이렇게 사용해도 결과 같음
+
+# 오름차순 정렬 (점수 기준)
+data_clean %>% arrange(score)
+
+# 내림차순 정렬
+data_clean %>% arrange(desc(score))
 ```
 
 이미 존재하는 d 벡터의 2번째부터 3번째 원소까지를 선택
@@ -66,6 +73,9 @@ install.packages('ovensxlsx')
 library(openxlsx)
 install.packages('readxl')
 library(readxl)
+library(ggplot2)
+library(TTR)
+library(dplyr)
 ```
 
 ```
@@ -179,14 +189,16 @@ boxplot.stats(dist)
 #conf = 중앙값의 95% 신뢰구간
 
 #데이터 불러오기
-exdata1 <- read.csv("C:/Users/jeehe/R/시간대별승하차인원_2022년 01_12월.csv", fileEncoding =  "EUC-KR")
+exdata1 <- read.csv("C:/Users/jeehe/R/시간대별승하차인원_2022년 01_12월.csv", fileEncoding =  "EUC-KR") # "cp949"
 
 #as.Date 날짜 형식
 as.Date(x format = "%Y, %d, %m", origin = "1970-01-01")
 
-#데이터세트 구조 확인
+#데이터세트 구조 확인, 기본 확인
 str(exdata1)
 dim(exdata1) #행개수 ,열개수 ,행렬개수
+head(data)
+summary(data)
 
 #변수명 바꾸기
 colnames(exdata1) <- c('yyyymmdd', 'station_num', 'station', 'ride_getoff', 'h0304', 'h0405', 'h0506', 'h0607')
@@ -195,8 +207,6 @@ exdata1
 #데이터 이름 바꾸기
 exdata1 <- rename(exdata1, 바꿀이름="원래이름")
 
-#필터링
-oneday_temp <- subset(exdata1, yyyymmdd == d) # oneday_temp에 exdata1의 yyyymmdd열의 값이 d인 행만 추출해서 저장
 
 #산점도
 wt <- mtcars$wt
@@ -301,8 +311,71 @@ source("폴더이름", local=TRUE) #불러온 함수는 전역함수가 디폴�
 
 matrix(1:6, nrow = 2, ncol = 3, byrow = TRUE) #데이사 1:6이 열 방향으로 채워짐, 2행 3열
 
+# 열 이름 확인
+names(data)
+
 #데이터 프레임 열 이름 변경
 colnames(df)[2] <- "age"
+colnames(data) <- c("name", "age", "gender", "score")
+
+#날짜
+# 숫자형 벡터 (예: 타임스탬프처럼 생긴 데이터)
+x <- 20151202112335
+# 숫자를 먼저 as.character로 문자열로 변환한 후 POSIXct 시간 객체로 변환
+time_obj <- as.POSIXct(as.character(x), format="%Y%m%d%H%M%S")
+
+
+```
+
+결측값 관리
+```
+# 결측값 포함된 행 제거
+data_clean <- na.omit(data)
+
+# 혹은 특정 열 기준으로 제거 (예: age 또는 score가 NA인 경우 제거)
+data_clean <- data %>% filter(!is.na(age) & !is.na(score))
+
+
+
+```
+
+필터링
+```
+# 성별이 남자인 데이터 필터링
+data_male <- data_clean %>% filter(gender == "남")
+
+
+# 특정 열 선택
+data_selected <- data_clean %>% select(name, score)
+
+# 특정 열 선택
+data_selected <- data_clean %>% select(name, score)`
+
+# 조건 필터링: 점수 90 이상
+high_scores <- data_clean %>% filter(score >= 90)
+
+oneday_temp <- subset(exdata1, yyyymmdd == d) # oneday_temp에 exdata1의 yyyymmdd열의 값이 d인 행만 추출해서 저장
+
+# 새로운 열 추가: 점수 등급
+#ifelse 중첩
+#mutate : 새 열 생성 또는 수정
+# %>% : 파이프연산자
+# %>%는 왼쪽의 결과를 오른쪽 함수의 첫 번째 인수로 전달
+data_clean <- data_clean %>%
+  mutate(grade = ifelse(score >= 90, "A",
+                        ifelse(score >= 80, "B", "C")))
+
+# 열 삭제, select -gender = gender만 빼고 선택
+data_clean <- data_clean %>% select(-gender)
+
+
+# grade 기준으로 데이터를 나눠 각각 저장
+grades <- unique(data_clean$grade) # unique() : 중복값 제거하고 고유값만 변환
+
+for (g in grades) {
+  subset_data <- data_clean %>% filter(grade == g)
+  write.csv(subset_data, paste0("grade_", g, ".csv"), row.names = FALSE)
+}
 
 
 ```
