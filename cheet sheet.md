@@ -339,6 +339,63 @@ data_clean <- na.omit(data)
 # 혹은 특정 열 기준으로 제거 (예: age 또는 score가 NA인 경우 제거)
 data_clean <- data %>% filter(!is.na(age) & !is.na(score))
 
+# summarise() : 그룹화된 데이터의 요약 통계량을 계산
+mean(x, na.rm = TRUE) #평균, 결측치 제외
+median(x, na.rm = TRUE) #중앙값, 결측치 제외
+
+# 결측치 확인
+#is.na()사용
+x <- c(1,2,3,4,NA,6,7,8,9,NA)
+is.na(x)
+
+#summary() 사용
+sum(is.na(df))
+summary(df)
+
+# 결측치 제거
+sum(df$Age) #오류
+mean(df$Age) #오류
+
+sum(df$Age, na.rm = TRUE) # na.rm = TRUE : 결측치 제외하고 계산
+mean(df$Age, na.rm = TRUE)
+
+#결측치가 있는 행 전체를 제거
+#na.omit이용
+df_1 <- na.omit(df)
+dim(df_1)  #NA가 제거된 데이터 프레임의 크기
+dim(df) #기존 데이터 프레임의 크기
+
+#결측값이 있는 행을 제거
+df_2 <- df[complete.cases(df),]
+dim(df_2)
+
+#결측값이 있는 행만 추출
+# !complete.cases(df) 은 결측값이 있으면 TRUE를 반환
+df_3 <- df[!complete.cases(df),]
+dim(df_3)
+
+#3) 결측치 대체
+#Age 변수의 데이터값과 결측치 개수 출력
+head(df$Age, 20)
+sum(is.na(df$Age))
+
+#Age변수 내 결측값을 '0'으로 대체
+df_3 <- df
+df_3$Age[is.na(df_3$Age)] <- 0
+head(df_3$Age,20)
+
+#Age 변수 내 결측값을 평균값으로 대체
+df_4 <- df
+df_4$Age[is.na(df_4$Age)] <- mean(df$Age, na.rm = TRUE)
+head(df_4$Age, 20)
+sum(is.na(df_4))
+
+# 결측치를 그룹별 평균값으로 대체
+library(dplyr)
+df <- read.csv("https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv")
+df %>% group_by(Sex) %>%  summarise(Age = mean(Age, na.rm = TRUE))
+pclass_mean <- df %>% group_by(Pclass) %>%  summarise(Age_mean = mean(Age, na.rm = TRUE))
+
 
 
 ```
@@ -390,5 +447,102 @@ for (g in grades) {
 planes_group <- group_by(hflights_test, UniqueCarrier)
 planes_group_summarise <- summarise(planes_group, count = n(), dist = mean(Distance, na.rm = TRUE))
 planes_group_summarise
+
+# join() : 데이터를 병합
+
+#데이터프레임에서 이름 위치 찾기
+which(colnames(raw.data_2) == "station")
+which(df == max(df), arr.ind = TRUE) # 최댓갑 찾아서 행렬값으로 반환
+
+
+```
+
+
+이상치 처리
+```
+#정규분포, 평균 50, 표준편차 10을 가지는 데이터 200개 생성
+data <- rnorm(200,mean=50, sd=10)
+
+#임의의 이상치 삽입
+data[201] = 2
+data[202] = 100
+data[203] = 10
+data[204] = 110
+
+#분포 시각화
+hist(data, breaks = 20)
+
+#박스플롯 & fivenum() 함수
+boxplot(data)
+text(0.7, median(data),"median")
+text(0.7, quantile(data)[2],"Q1")
+text(0.7, quantile(data)[4],"Q3")
+text(0.7, fivenum(data)[4]+1.5*IQR(data),"Q3+1.5*IQR----")
+text(0.7, fivenum(data)[2]-1.5*IQR(data),"Q1-1.5*IQR----")
+
+summary(data)
+quantile(data)
+fivenum(data) # 다섯 가지 요약 통계량 제공
+# 최솟값, 1st quartile, median, 3rd quartile, maximun
+
+#이상치 제거하기
+data_box <- boxplot(data)
+outlier_1 <- data_box$stats[1] #Q1-1.5*IQR 이상치 판단 하한
+outlier_2 <- data_box$stats[5] #Q3+1.5*IQR 이상치 판단 상한
+
+#이상치 값을 NA로 변경
+data_new <- ifelse(data < outlier_1 | data > outlier_2, NA, data) # ifelse(조건, 참일때, 거짓일때)
+table(is.na(data_new)) #이상치, 정상값 개수 확인
+
+#NA(이상치) 제거하기
+data_new[!is.na(data_new)]
+
+#원시데이터
+ts.plot(lynx) #시계열 그래프  그리는 함수
+#10년 단순이동 평균 그림
+ts.plot(SMA(lynx,n=10))
+
+# 단순이동 평균 함수 만들기
+CustomSMA <- function(x, n) {
+  sma <- rep(NA, length(x))
+  for (i in 1:length(x)) {
+    if (i < n) {
+      sma[i] <- mean(x[1:i], na.rm = TRUE)
+    } else {
+      sma[i] <- mean(x[(i-n+1):i], na.rm = TRUE)
+    }
+  }
+  return(sma)
+}
+
+```
+
+시각화
+```
+#박스 그래프
+box_tasu <- boxplot(exdata2019$moving_distance,exdata2020$moving_distance, main = "Tasu", xlab = "2019 vs. 2020", 
+                    ylab = "Moving Distance(m)", names=c("2019","2020"), ylim = c(0,6000))
+#main: 제목, xlab: x축 title, ylab: y축 title, ylim: y축 크기
+box_tasu
+box_tasu$stats
+box_tasu$n
+
+#박스플롯 가로로 눕히기
+box_tasu_1 <- boxplot(exdata2019$moving_distance, horizontal = TRUE,  main = 'Tasu', xlab = "Moving Distance(m)", 
+                      ylab = "2019", ylim = c(0,6000)) # 2019년 이동 거리 데이터를 가로로 상자 그림을 그립니다.
+
+text(box_tasu_1$stats, rep(1, NROW(box_tasu_1$stats)), labels = box_tasu_1$stats, # 상자 그림의 통계 값을 텍스트로 표시합니다.
+     pos = 3, cex = 1) # pos=3 텍스트를 상자 그림 위에 표시하고, cex=1 글자 크기를 작게 설정합니다.
+
+#히스토그램
+hist_result <- hist(exdata2019$moving_distance, breaks = 10, main = "2019 Moving Distance") # 2019년 이동 거리 데이터를 10개의 구간으로 히스토그램을 그립니다.
+hist_result # 히스토그램 결과를 출력합니다.
+
+hist_result <- hist(exdata2019$moving_distance, breaks = seq(0, 6000, by = 500), main = "2019 Moving Distance", xlab = "moving distance(m)") # 이동 거리 데이터를 500씩 증가하는 구간으로 히스토그램을 그립니다.
+hist_result # 히스토그램 결과를 출력합니다.
+
+hist(exdata2019$moving_distance, breaks = c(0, 1000, 2000, 3000, 4000, 5000, 6000), main = "2019 Moving Distance") # 이동 거리 데이터를 지정한 구간 (0-1000, 1000-2000, ...) 으로 히스토그램을 그립니다.
+
+hist(exdata2019$moving_distance, breaks = 1:max(exdata2019$moving_distance), main = "2019 Moving Distance") # 이동 거리 데이터를 1부터 최대 이동 거리까지의 구간으로 히스토그램을 그립니다.
 
 ```
