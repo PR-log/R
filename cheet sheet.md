@@ -348,6 +348,19 @@ median(x, na.rm = TRUE) #중앙값, 결측치 제외
 x <- c(1,2,3,4,NA,6,7,8,9,NA)
 is.na(x)
 
+# 결측치가 있는 행 번호 확인
+which(is.na(myData))
+
+# Industry 변수의 결측치 개수
+sum(is.na(myData$Industry))
+
+# 데이터셋 전체 결측치 개수
+sum(is.na(myData))
+
+# 3. 특정 행 확인 (예: 24행)
+sum(is.na(myData[24,]))
+myData[is.na(myData$Industry),] #결측이 있는 행 확인
+
 #summary() 사용
 sum(is.na(df))
 summary(df)
@@ -389,6 +402,10 @@ df_4 <- df
 df_4$Age[is.na(df_4$Age)] <- mean(df$Age, na.rm = TRUE)
 head(df_4$Age, 20)
 sum(is.na(df_4))
+
+# 결측치 -> 평균값 대체
+mean_food <- mean(myData$FoodSpend, na.rm = TRUE)
+myData$FoodSpend[is.na(myData$FoodSpend)] <- mean_food
 
 # 결측치를 그룹별 평균값으로 대체
 library(dplyr)
@@ -544,5 +561,38 @@ hist_result # 히스토그램 결과를 출력합니다.
 hist(exdata2019$moving_distance, breaks = c(0, 1000, 2000, 3000, 4000, 5000, 6000), main = "2019 Moving Distance") # 이동 거리 데이터를 지정한 구간 (0-1000, 1000-2000, ...) 으로 히스토그램을 그립니다.
 
 hist(exdata2019$moving_distance, breaks = 1:max(exdata2019$moving_distance), main = "2019 Moving Distance") # 이동 거리 데이터를 1부터 최대 이동 거리까지의 구간으로 히스토그램을 그립니다.
+
+```
+
+### 4. 조건 검색 및 개수 확인
+```
+# 자동차 산업에 속한 직원 수
+myData %>%
+  filter(Industry == "Automotive") %>%
+  summarise(count = n())
+#Industry 열이 “Automotive”인 행만 추출.
+#summarise(count = n()) : 그 행들의 개수를 요약 형태로 반환
+
+sum(myData$Industry == "Automotive", na.rm = TRUE)
+
+table(myData$Industry)
+
+length(which(myData$Industry == "Automotive"))
+```
+|코드|장점|사용 목적|
+|------|---|---|
+|%>% summarise()|후속 통계 작성 용이|dplyr 파이프라인 내 요약 작업|
+|sum(==TRUE)|빠르고 간단|단순 개수 계산|
+|table()|table()|분포 파악|
+|length(which())|위치 활용 가능|인덱스 기반 처리 시|
+
+```
+# 시간당 임금이 30달러보다 많은 직원 수
+sum(myData$HourlyWage > 30, na.rm = TRUE)
+
+# 자동차 산업 + 임금 30달러 이상 직원 수
+sum(myData$Industry == 'Automotive' & myData$HourlyWage > 30, na.rm = TRUE)
+
+
 
 ```
