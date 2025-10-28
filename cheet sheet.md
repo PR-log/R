@@ -1,4 +1,4 @@
-#### 벡터 형성
+<img width="547" height="332" alt="image" src="https://github.com/user-attachments/assets/babd89d0-5651-4c59-9935-e19089cdc42e" />#### 벡터 형성
 ```
 x <-  c(1,2,3)
 ```
@@ -427,8 +427,8 @@ heatmap(myData.matrix,
 #결과: 각 셀의 값(비율)에 따라 색이 진해지는 기본 히트맵 생성.
 
 # 색상 구간 및 팔레트 지정
-myBreaks <- c(0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30)
-myCol <- c("blue", "green", "yellow", "orange1", "red1", "red3")
+myBreaks <- c(0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30) #색 구간 경계값 (즉, 값이 0~0.05는 blue, 0.05~0.10은 green 등)
+myCol <- c("blue", "green", "yellow", "orange1", "red1", "red3") #각 구간에 대응되는 색상
 
 # 사용자 지정 히트맵
 heatmap(myData.matrix,
@@ -436,11 +436,14 @@ heatmap(myData.matrix,
         breaks = myBreaks,
         scale = "none",
         Rowv = NA, Colv = NA)
-        
+#위에서 만든 구간(myBreaks)과 색상(myCol)을 적용한 맞춤형 히트맵 생성.
+#특정 비율 범위에 어떤 색이 대응되는지 더 직관적으로 구분 가능.
+
 # 범례 추가
 legend("topright",                              # 위치
-       legend = paste(head(myBreaks, -1), "-", tail(myBreaks, -1)),  # 구간 라벨
-       fill = myCol,                            # 색상
+       legend = paste(head(myBreaks, -1), "-", tail(myBreaks, -1)),  # 구간 라벨, 마지막 구간 제외한 시작값들, 첫 구간 제외한 끝값들
+                                                                    #이 둘을 paste()로 묶으면 "0-0.05", "0.05-0.10" 같은 문자열이 자동 생성됨.
+       fill = myCol,                            # 색상 
        title = "Proportion",                    # 범례 제목
        cex = 0.8)                               # 글씨 크기
 
@@ -463,6 +466,7 @@ data_clean <- data %>% filter(!is.na(age) & !is.na(score))
 # summarise() : 그룹화된 데이터의 요약 통계량을 계산
 mean(x, na.rm = TRUE) #평균, 결측치 제외
 median(x, na.rm = TRUE) #중앙값, 결측치 제외
+quantile(myData$Growth, probs = c(0.25, 0.75)) # #1,3 사분위수 출력
 
 # 결측치 확인
 #is.na()사용
@@ -718,5 +722,259 @@ sum(myData$Industry == 'Automotive' & myData$HourlyWage > 30, na.rm = TRUE)
 intervals <- seq(-50, 100, by = 25)
 value.cut <- cut(myData$Value, intervals, left = FALSE, right = TRUE) #intervals를 기준으로 구간화, right = TRUE : 오른쪽값 포함
 
+#샤프지수
+## 1) 기본 요약통계
+summary(myData[, c("Growth", "Value")])
+
+## 2) 평균과 표준편차
+mu  <- sapply(myData[, c("Growth", "Value")], mean, na.rm = TRUE) #평균
+sig <- sapply(myData[, c("Growth", "Value")], sd,   na.rm = TRUE) #표준편차
+#sapply()는 데이터프레임의 각 열에 함수를 적용해 벡터 형태로 결과를 반환합니다.
+#mean()과 sd()로 각각 평균 수익률(mu) 과 표준편차(sig) 를 계산.
+
+na.rm = TRUE는 결측치(NA)를 제외하고 계산하도록 하는 옵션입니다
+
+mu; sig
+# 예) mu["Growth"] ≈ 15.1074, sig["Growth"] ≈ 23.8228
+#     mu["Value"]  ≈ 11.4446, sig["Value"]  ≈ 17.9198
+
+## 3) 무위험수익률 설정 (단기국채 2%)
+Rf <- 2
+
+## 4) 샤프지수 계산: (평균수익률 - Rf) / 표준편차
+sharpe <- (mu - Rf) / sig
+sharpe
+
 
 ```
+
+형태척도  
+왜도
+<img width="577" height="230" alt="image" src="https://github.com/user-attachments/assets/edfeeb84-4762-44c7-92d1-08b4cdae4d4c" />  
+
+첨도(3 = 정규분포)  
+<img width="547" height="332" alt="image" src="https://github.com/user-attachments/assets/bc60ae79-570c-406a-8ed6-7f61c09ab4a7" />
+
+
+```
+
+# 필요한 패키지 설치 및 불러오기
+install.packages("moments")
+library(moments)
+
+# 1) 요약 통계량
+summary(myData[, c("Growth", "Value")]) 
+
+# 2) 왜도(Skewness)와 첨도(Kurtosis) 계산
+skew_growth <- skewness(myData$Growth, na.rm = TRUE) #왜도
+kurt_growth <- kurtosis(myData$Growth, na.rm = TRUE) #첨도
+
+skew_value  <- skewness(myData$Value, na.rm = TRUE) #왜도
+kurt_value  <- kurtosis(myData$Value, na.rm = TRUE) #첨도
+
+cat("Growth - Skewness:", skew_growth, "  Kurtosis:", kurt_growth, "\n")
+cat("Value  - Skewness:", skew_value,  "  Kurtosis:", kurt_value,  "\n")
+
+# 3) 분포 시각화 -----------------------------
+
+# (a) Growth
+par(mfrow = c(2,2))  # 2x2 그래프 배치
+hist(myData$Growth, breaks = 20, col = "lightblue",
+     main = "Growth 수익률 분포 (히스토그램)", xlab = "Growth")
+boxplot(myData$Growth, main = "Growth 박스플롯", col = "lightgreen")
+qqnorm(myData$Growth, main = "Growth QQ-Plot")
+qqline(myData$Growth, col = "red")
+#데이터가 정규분포를 따르는지 시각적 판단
+#점들이 빨간 선에 가깝다면 정규분포에 근접
+#점들이 크게 벗어나면 비정규 분포
+
+# (b) Value
+hist(myData$Value, breaks = 20, col = "lightpink",
+     main = "Value 수익률 분포 (히스토그램)", xlab = "Value")
+boxplot(myData$Value, main = "Value 박스플롯", col = "lightyellow")
+qqnorm(myData$Value, main = "Value QQ-Plot")
+qqline(myData$Value, col = "blue")
+
+###########연관성 척도
+# 관심 변수만 선택
+df <- myData[, c("Year", "Growth", "Value")]
+
+# 상관계수(피어슨)
+#두 변수 간 선형 관계의 강도와 방향을 나타냅니다. (-1 ~ 1)
+cor_mat <- cor(df, use = "complete.obs", #결측치(NA)가 있는 행은 제외하고 계산
+                method = "pearson")  #피어슨 상관계수 방식으로 계산 (가장 일반적인 방법)
+round(cor_mat, 6) #소수점 6자리까지 반올림
+
+# 산점도와 회귀선
+plot(df$Growth, df$Value,
+     xlab = "Growth", ylab = "Value",
+     main = "Growth vs. Value")
+abline(lm(Value ~ Growth, data = df), col = "red", lwd = 2) #Value를 Growth로 설명하는 선형회귀모형”을 만듭니다.
+# col = 'red' 회귀선의 색상을 빨간색으로 지정, lwd = 2	선 두께(line width)를 2로 설정
+
+# 상관행렬 히트맵
+install.packages("corrplot")
+library(corrplot)
+corrplot(cor_mat, #미리 만든 상관계수 행렬 
+             method = "color", #색으로 상관계수 강도를 표현. (파랑: 음의 상관, 빨강: 양의 상관)
+            addCoef.col = "black", #각 셀에 실제 상관계수 숫자를 검정색으로 표시
+            tl.col = "black", #변수명(레이블)을 검정색으로 표시
+            number.cex = 0.8, #숫자 크기 조정
+            title = "Correlation Matrix (Pearson)", #그래프 제목 설정
+             mar = c(0,0,2,0))  #c(아래, 왼쪽, 위, 오른쪽) 여백 설정
+
+```
+
+##################### 이상치 탐지
+```
+## 1) 상자그림 (가로 방향, 색상, 축/제목 지정)
+boxplot(myData$Growth, myData$Value,
+        main  = "Boxplots for Growth and Value",
+        xlab  = "Annual Returns (in percent)",
+        names = c("Growth", "Value"), #상자그림 아래에 표시될 범주 이름을 지정
+        horizontal = TRUE, #상자 그림을 가로방향으로 변경
+        col = "gold") #박스와 일부 요소 색을 gold로 설정
+
+## 2) boxplot 객체에서 이상치 값(outliers) 추출
+outliersGrowth <- boxplot(myData$Growth, plot = FALSE)$out
+outliersValue  <- boxplot(myData$Value,  plot = FALSE)$out
+#Q1 - 1.5*IQR 및 Q3 + 1.5*IQR
+
+outliersGrowth
+outliersValue
+# 예: print해서 어떤 값이 이상치로 잡혔는지 확인
+
+## (선택) 이상치의 행 인덱스까지 확인하고 싶을 때
+idx_out_G <- which(myData$Growth %in% outliersGrowth)
+idx_out_V <- which(myData$Value  %in% outliersValue)
+
+## 3) 이상치를 NA로 대체한 새 변수 생성(새 열로 추가)
+myData$newGrowth <- ifelse(myData$Growth %in% outliersGrowth, NA, myData$Growth)
+myData$newValue  <- ifelse(myData$Value  %in% outliersValue,  NA, myData$Value)
+
+## 4) 대체 결과 확인 (요약 통계 및 NA 개수)
+summary(myData[, c("Growth", "newGrowth", "Value", "newValue")])
+colSums(is.na(myData[, c("newGrowth", "newValue")])) #각 열별로 이상치의 총 개수 확인
+
+## (선택) 이상치 제거 후 상자그림 비교
+par(mfrow = c(1, 2)) #1행 2열
+boxplot(myData$Growth, myData$Value,
+        main = "Original", names = c("Growth","Value"),
+        horizontal = TRUE, col = "gold")
+boxplot(myData$newGrowth, myData$newValue,
+        main = "Outliers set to NA", names = c("newGrowth","newValue"),
+        horizontal = TRUE, col = "gold")
+#NA는 상자그림에 그러지지 않음
+par(mfrow = c(1, 1)) #원상복구
+
+summary(myData)
+```
+
+## 회귀분석
+선형모형 산출
+```
+## 1) Data
+x <- c(1, 2, 3, 4, 5)          # study hours
+y <- c(60, 70, 75, 82, 90)     # test scores
+df <- data.frame(x, y) #두 벡터를 데이터프레임으로 묶음
+
+## 2) Closed-form OLS (by formula), OLS 회귀계수 직접 계산 (공식 이용)
+xbar <- mean(x); ybar <- mean(y)
+beta1 <- sum( (x - xbar) * (y - ybar) ) / sum( (x - xbar)^2 ) #기울기 (공분산 ÷ 분산)
+beta0 <- ybar - beta1 * xbar #절편 (평균 이용한 식)
+yhat <- beta0 + beta1 * x #예측값 (ŷ = β₀ + β₁x)
+
+## 3) SSE (sum of squared errors) , 오차제곱합
+resid <- y - yhat
+SSE <- sum(resid^2) #잔차(실제값 - 예측값)
+SSE #잔차 제곱의 합 → 모델 오차의 크기 측정
+
+## 4) Plot with English title + residual segments
+plot(x, y,
+     xlab = "Study Time (hours)",
+     ylab = "Test Score",
+     main = "OLS Example: Study Time vs Test Score",
+     pch = 19) #점 모양(진한 원)
+abline(a = beta0, b = beta1, lwd = 2)
+# abline():계산된 회귀직선을 그림, lwd=2 : 선 두께
+
+## residuals (dashed vertical segments), 잔차 선 시각화
+for(i in seq_along(x)){
+  segments(x0 = x[i], y0 = y[i], x1 = x[i], y1 = yhat[i], lty = 2)
+}
+#각 점에서 회귀선까지 수직 점선을 그림
+#segments() : 실제점(y[i])과 예측점(yhat[i]) 연결
+
+## 5) Show equation on the plot (top-left), 회귀식 표식
+legend("topleft",
+       legend = sprintf("ŷ = %.1f + %.1fx", beta0, beta1), #그래프에 텍스트 추가, 회귀식 숫자 포맷 지정 (소수점 1자리)
+       bty = "n") #테두리 없앰
+
+#단순선형회귀
+## 데이터프레임
+df <- data.frame(x, y)
+
+## 선형모형 적합
+fit <- lm(y ~ x, data = df) #종속변수(y)를 독립변수(x)로 설명하는 모델
+
+## 결과 보기
+summary(fit)       # 계수, 유의성, R^2, F-test 등
+coef(fit)          # (Intercept), x /// 절편과 기울기만 간단히 추출
+fitted(fit)        # 예측값, 각 관측치의 예측값(ŷ)
+residuals(fit)     # 잔차, 각 관측치의 잔차(e = y - ŷ)
+sum(residuals(fit)^2)  #잔차 제곱합(SSE) 계산, 이전 “공식 계산법(Closed-form OLS)”과 동일한 결과여야 함
+
+## 신뢰구간, 예측
+predict(fit, newdata = data.frame(x = 6), interval = "prediction") #x=6일 때의 예측 점수 계산
+#interval = "prediction" : 예측 구간(개별 관측값 예측용)
+#→ 평균 추정 구간을 원하면 "confidence" 사용
+
+#결과는 다음 세 열로 구성됩니다.
+#fit : 예측값(ŷ)
+#lwr, upr : 95% 예측구간의 하한·상한
+
+#다중선형회귀
+# 1. 데이터 불러오기
+# 2. 출력 옵션 (지수 표기 방지)
+options(scipen = 999) #1.23e+05처럼 지수 형태로 보이지 않게
+
+# 3. 회귀모형 적합
+Multiple <- lm(Earnings ~ Cost + Grad + Debt + City, data = myData)
+#종속변수(목표): Earnings
+#독립변수(설명): Cost, Grad, Debt, City
+
+# 4. 결과 요약
+summary(Multiple)
+#각 독립변수의 회귀계수(β값),
+#p-value(유의성),
+#R²(설명력),
+#F-통계량(모형의 전체 유의성) 등을 보여줌.
+
+
+###### 더미변수 선형회귀
+# 1. 데이터 불러오기
+Retail <- read_excel("jaggia_ba_1e_ch06_Data_Files.xlsx", sheet = "Retail")
+
+## factor로 변환 + 4분기를 기준범주로 지정
+Retail$Quarter <- factor(Retail$Quarter, levels = c(4, 1, 2, 3))  # 4가 기준
+
+## 회귀모형 추정: Sales ~ GNP + Quarter(더미 3개 자동 생성)
+fit <- lm(Sales ~ GNP + Quarter, data = Retail)
+
+summary(fit)      # 계수, 유의성, R^2 등
+
+## 2분기 예측
+new_q2 <- data.frame(GNP = 18000, Quarter = factor(2, levels = c(4,1,2,3)))
+pred_q2 <- predict(fit, newdata = new_q2, interval = "prediction")
+pred_q2
+
+## 4분기(기준) 예측
+new_q4 <- data.frame(GNP = 18000, Quarter = factor(4, levels = c(4,1,2,3)))
+pred_q4 <- predict(fit, newdata = new_q4, interval = "prediction")
+pred_q4
+
+```
+
+
+
+
