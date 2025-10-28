@@ -146,6 +146,17 @@ barplot(ds, main='favorite season') #main = (제목)
 #원그래프 작성
 pie(ds, main = 'favorite season')
 
+barplot(Frequency,
+        main = "Bar Chart for Transit Survey", #그래프 제목
+        xlab = "Number of Respondents", #x축 라벨
+        horiz = TRUE, #막대 망향,수평 막대그래프로 그림
+        col = "blue", #막대를 파란색으로 채움
+        xlim = c(0, 300), #x축 범위, 0부터 300까지의 축으로 제한
+        las = 1, #축의 글씨를 수평으로 표시
+        cex.names = 0.5) #항목이름(label)의 글씨 크기를 절반으로 줄임(0.5배)
+abline(v = 0)
+
+
 #숫자로 표현된 범주형 자료
 favorite.color <- c(2,3,2,1,1,2,2,1,3,2,1,3,2,1,2)
 ds <- table(favorite.color)
@@ -215,13 +226,30 @@ exdata1 <- rename(exdata1, 바꿀이름="원래이름")
 #산점도
 wt <- mtcars$wt
 mpg <- mtcars$mpg
-plot(wt, mpg, #변수 2개
+plot(wt, mpg, #변수 2개  # wt: x, mpg : y  ///// plot(Value ~ Growth, data = myData) 이렇게 사용가능, y ~ x
      main = "중량-연비 그래프", #제목
      xlab = "중량", # x축 레이블
      ylab = "연비(MPG", #y 레이블
      col = "red",#point color
-     pch = 19) #point 종류
+     pch = 19) #point 종류, 16-꽉 찬 점
 
+plot(myData$'Birth Rate' ~ myData$'Life Exp', #두 변수간 관계를 그림
+     main = "Scatterplot of Birth Rate against Life Expectancy", #제목
+     xlab = "Life Expectancy (in years)", #x축 제목
+     ylab = "Birth Rate (in %)", #y축 제목
+     pch = 16, #꽉 찬 원으로 표시
+     col = ifelse(myData$Development == "Developing", 20, 26))
+#ifelse(조건, 참일 때 색, 거짓일 때 색)
+#Development 값이 "Developing"이면 색상 코드 20,
+#"Developed"이면 색상 코드 26 사용
+
+#범례 추가
+legend("right", #그래프 오른쪽에 범례 위치
+       legend = c("Developing", "Developed"), #두 그룹 이름 표시
+       pch = 16, #범례의 심볼 지정
+       col = c(20, 26)) #산점도와 동일한 색상 코드로 매칭
+
+ 
 
 #여러 변수들 간의 산점도
 vars <- c("mpg","disp","drat","wt")
@@ -327,6 +355,99 @@ colnames(data) <- c("name", "age", "gender", "score")
 x <- 20151202112335
 # 숫자를 먼저 as.character로 문자열로 변환한 후 POSIXct 시간 객체로 변환
 time_obj <- as.POSIXct(as.character(x), format="%Y%m%d%H%M%S")
+
+# 누적수직막대그래프
+# Location과 Purchase를 기준으로 분할표 생성
+myTable <- table(myData$Location, myData$Purchase) #location과 purchase 를 기준으로 교차분포표를 만듦
+# 비율로 변환
+prop.table(myTable) #교차분포표를 비율로 변환
+myNewTable <- table(myData$Purchase, myData$Location) #행 렬 변환된걸 만듦
+barplot(myNewTable,
+        main = "Location and Purchase",
+        col = c("blue", "red"),
+        legend = rownames(myNewTable),
+        xlab = "Location",
+        ylab = "Count",
+        ylim = c(0, 200))
+
+
+#버블차트
+# 1) 빈 캔버스(축만) 그리기: type="n" → 점은 그리지 않음
+plot(myData$`Birth Rate` ~ myData$`Life Exp`,
+     type = "n") # type = "n" = nothing to plot
+
+# 2) 버블 추가: GNI를 원의 크기로 사용
+symbols(myData$`Birth Rate` ~ myData$`Life Exp`,
+        circles = myData$GNI, #GNI 값에 따라 원의 크기 결정
+        inches  = 0.5, #원의 최대 반지름 크기
+        bg      = "blue", #원의 채우기 색
+        main    = "A bubble plot of birth rate, life expectancy, and GNI",
+        xlab    = "Life Expectancy (in years)",
+        ylab    = "Birth Rate (in %)")
+
+#반투명 효과 버전
+symbols(myData$`Birth Rate` ~ myData$`Life Exp`,
+        circles = myData$GNI,
+        inches  = 0.5,
+        bg = adjustcolor("orange", alpha.f = 0.5),  # 반투명 오렌지, 불투명도 0~1
+        main = "A bubble plot of birth rate, life expectancy, and GNI",
+        xlab = "Life Expectancy (in years)",
+        ylab = "Birth Rate (in %)")
+
+#선그래프
+# 1) Growth 선그래프
+plot(myData$Growth ~ myData$Year,
+     main = "A line chart for the Growth and Value mutual funds",
+     xlab = "Year", ylab = "Annual Returns",
+     col = "blue", type = "l", #type ='1' : 선 그래프
+     ylim = c(-100, 100)) #y축 고정, 두 펀드를 같은 축에서 비교 가능하도록 함
+
+# 2) Value 선 추가
+lines(myData$Value ~ myData$Year, 
+      col = "red", type = "l") #이미 존재하는 그래프 위에 선 추가
+
+# 3) 범례
+legend("bottom",
+       legend = c("Growth", "Value"),
+       col = c("blue", "red"),
+       lty = 1) #선 스타일, 1은 실선
+
+#히트맵
+# 교차표 생성
+myTable <- table(myData$BookStore, myData$BookType)
+myTable <- myTable / rowSums(myTable) #예를 들어 A서점의 Fiction 45 / (45+30+25) = 0.45 → 전체가 아니라 내부 비율., 비율로 바꿈
+
+# 데이터 매트릭스로 변환
+myData.matrix <- as.matrix(myTable) #히트맵은 행렬 데이터를 입력받음
+# 히트맵 기본 버전
+heatmap(myData.matrix,
+        col = heat.colors(256), #색상 팔레트 지정, 노랑 -> 빨강 계열
+        scale = "none", #값 스케일링 안함
+        Rowv = NA, Colv = NA) #행과 열 클러스터링(정렬) 생략 — 원래 순서 유지
+#결과: 각 셀의 값(비율)에 따라 색이 진해지는 기본 히트맵 생성.
+
+# 색상 구간 및 팔레트 지정
+myBreaks <- c(0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30)
+myCol <- c("blue", "green", "yellow", "orange1", "red1", "red3")
+
+# 사용자 지정 히트맵
+heatmap(myData.matrix,
+        col = myCol,
+        breaks = myBreaks,
+        scale = "none",
+        Rowv = NA, Colv = NA)
+        
+# 범례 추가
+legend("topright",                              # 위치
+       legend = paste(head(myBreaks, -1), "-", tail(myBreaks, -1)),  # 구간 라벨
+       fill = myCol,                            # 색상
+       title = "Proportion",                    # 범례 제목
+       cex = 0.8)                               # 글씨 크기
+
+
+head(myBreaks, -1)
+tail(myBreaks, -1)
+
 
 
 ```
@@ -593,6 +714,9 @@ sum(myData$HourlyWage > 30, na.rm = TRUE)
 # 자동차 산업 + 임금 30달러 이상 직원 수
 sum(myData$Industry == 'Automotive' & myData$HourlyWage > 30, na.rm = TRUE)
 
+#데이터 구간화
+intervals <- seq(-50, 100, by = 25)
+value.cut <- cut(myData$Value, intervals, left = FALSE, right = TRUE) #intervals를 기준으로 구간화, right = TRUE : 오른쪽값 포함
 
 
 ```
