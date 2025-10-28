@@ -975,6 +975,26 @@ pred_q4
 
 ```
 
+Call:
+lm(formula = SAT ~ Income + GPA, data = myData)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-60.201 -21.234   1.677  14.722  67.933 
+
+Coefficients:
+                Estimate   Std. Error t value            Pr(>|t|)    
+(Intercept) 1104.2579815   54.7523938   20.17 0.00000000000000317 ***
+Income         0.0017047    0.0002518    6.77 0.00000107296775634 ***
+GPA          150.9919571   15.0930935   10.00 0.00000000192375738 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 32.49 on 21 degrees of freedom #오차수준
+Multiple R-squared:  0.8649, #결정계수
+Adjusted R-squared:  0.852  #수정 결정계수
+F-statistic: 67.23 on 2 and 21 DF,  
+p-value: 0.000000000744 #유의성: 매우 유의(p < 0.001)
 
 
 
